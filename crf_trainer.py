@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from sklearn_crfsuite import metrics
+from sklearn.model_selection import train_test_split
 from SentenceGetter import SentenceGetter
 from WordFeatureGetter import WordFeatureGetter
 from crf_n_folder_ensemble import crf_n_folder_ensemble
@@ -130,6 +131,10 @@ print("Starting Feature Extraction")
 X = (sent2features(s) for s in sentences)
 y = [sent2labels(s) for s in sentences]
 print("Finished Feature Extraction")
+
+print("Started Train Test Split")
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=42)
+print("Finished Train Test Split")
 
 
 print("Started Training Train Data Model")

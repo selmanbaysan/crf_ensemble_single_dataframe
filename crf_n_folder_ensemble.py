@@ -4,14 +4,16 @@ import os
 import pandas as pd
 import glob
 import numpy as np
+import random
 from sklearn_crfsuite.compat import BaseEstimator
 
 class crf_n_folder_ensemble(BaseEstimator):
 
-    def __init__(self, data_folder_path, model_path):
+    def __init__(self, data_folder_path, model_path, n_fold=1):
         
         self.data_folder_path = data_folder_path # folder path to read data from
         self.model_path = model_path # folder path to save ensembled models
+        self.n_fold = n_fold # number of fold that will be ensembled
         self.crf = sklearn_crfsuite.CRF( #crf model
                 algorithm='lbfgs',
                 c1=0.1,
@@ -20,7 +22,6 @@ class crf_n_folder_ensemble(BaseEstimator):
                 all_possible_transitions=True)
         self.models = list() # model list that keeps the trained models
         
-    # comment eklenecek
     def prepare_data(self):
         
         df = self.create_dataframe(self.data_folder_path)# create test dataframe
@@ -53,21 +54,53 @@ class crf_n_folder_ensemble(BaseEstimator):
         
         classes = np.unique(tags).tolist() # get unique classes
         return classes
-
-    def fit(self, X_list, y_list): 
-
-        if len(X_list) != len(y_list): # input list must have same length
-            raise Exception('Input lengths must be equal.')
+    
+    def partition(self, X_train, y_train):
         
-        models = []
-        for i in range(len(X_list)): # for each train data in X_list
+        if len(X_train) != len(y_train):
+            raise Exception("Input X_train and y_train sizes must have same length. Please check your inputs.")
+
+        try:
+            zipped = zip(X_train, y_train)
+            zipped_list = list(zipped)
+        except:
+            raise Exception("An error occured while zipping X_train and y_train.")
+        
+        try:
+            random.shuffle(zipped_list)
+        except:
+            raise Exception("An error occured while shuffling zipped X_train and y_train.")
+        
+        if self.n_fold < 1 or self.n_fold > len(X_train):
+            raise Exception("Constructor input n_fold must be greater than or equal to 1 and lower than X_train length.")
+        
+        train_list = []
+        for i in range(self.n_fold):
+            random_zipped = zipped_list[i::self.n_fold]
+            
             try:
-                self.crf.fit(X_list[i], y_list[i]) # train a seperate model
+                X, y = zip(*random_zipped)
+            except:
+                raise Exception("An error occured while unzipping X_train and y_train set.")
+
+            train_list.append((X,y))
+        return train_list
+
+
+    def fit(self, X_train, y_train): 
+
+        train_list = self.partition(X_train, y_train)
+
+        models = []
+        for train_set in train_list: # for each train data in X_list
+            X_train, y_train = train_set
+            try:
+                self.crf.fit(X_train, y_train) # train a seperate model
             except:
                 raise Exception("An error occured while training crf model")
             models.append(self.crf) # append trained model list
         
-        self.models = models 
+        self.models = models
 
     def predict(self, X_test):
 
@@ -129,3 +162,7 @@ class crf_n_folder_ensemble(BaseEstimator):
                 pickle.dump(self.models, pck)
         except:
             raise Exception("Cannot save the model!")
+
+a = crf_n_folder_ensemble("data", "model", 1)
+
+a.fit([1, 2, 3, 4, 5, 6, 7], [8, 9, 10, 11, 12, 13, 14])
