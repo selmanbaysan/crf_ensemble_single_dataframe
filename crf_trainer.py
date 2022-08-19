@@ -7,9 +7,9 @@ from crf_n_folder_ensemble import crf_n_folder_ensemble
 
 word_feature_getter = WordFeatureGetter()
 
-crf_n_folder_ensemble = crf_n_folder_ensemble("data", "final_model") #path should be given as constructor input
+crf_n_folder_ensemble = crf_n_folder_ensemble("data", "crf_ensemble_single_dataframe", 6) #path should be given as constructor input
 
-df, classes = crf_n_folder_ensemble.prepare_data(divide_data=True, num_splits=3)
+df, classes = crf_n_folder_ensemble.prepare_data()
 
 print("Started getting the sentences")
 sentence_getter = SentenceGetter(df)
@@ -123,14 +123,12 @@ def sent2labels(sent):
     return [label for token, postag, label in sent]
 
 
-def sent2tokens(sent):
-    return [token for token, postag, label in sent]
-
-
 print("Starting Feature Extraction")
-X = (sent2features(s) for s in sentences)
+X = [sent2features(s) for s in sentences]
 y = [sent2labels(s) for s in sentences]
 print("Finished Feature Extraction")
+
+del sentences
 
 print("Started Train Test Split")
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=42)

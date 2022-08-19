@@ -57,9 +57,9 @@ class crf_n_folder_ensemble(BaseEstimator):
     
     def partition(self, X_train, y_train):
         
-        if len(X_train) != len(y_train):
+        """if len(X_train) != len(y_train):
             raise Exception("Input X_train and y_train sizes must have same length. Please check your inputs.")
-
+"""
         try:
             zipped = zip(X_train, y_train)
             zipped_list = list(zipped)
@@ -162,7 +162,3 @@ class crf_n_folder_ensemble(BaseEstimator):
                 pickle.dump(self.models, pck)
         except:
             raise Exception("Cannot save the model!")
-
-a = crf_n_folder_ensemble("data", "model", 1)
-
-a.fit([1, 2, 3, 4, 5, 6, 7], [8, 9, 10, 11, 12, 13, 14])
