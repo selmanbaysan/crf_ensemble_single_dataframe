@@ -4,22 +4,16 @@ from SentenceGetter import SentenceGetter
 from WordFeatureGetter import WordFeatureGetter
 from crf_n_folder_ensemble import crf_n_folder_ensemble
 
+word_feature_getter = WordFeatureGetter()
+
 crf_n_folder_ensemble = crf_n_folder_ensemble("data", "final_model") #path should be given as constructor input
 
-train_dfs, test_df, classes = crf_n_folder_ensemble.prepare_data(divide_data=True, num_splits=3)
+df, classes = crf_n_folder_ensemble.prepare_data(divide_data=True, num_splits=3)
 
-train_sentence_list = list()
-print("Getting the sentences")
-for df in train_dfs:
-    train_getter = SentenceGetter(df)
-    train_sentence_list.append(train_getter.sentences)
-
-test_getter = SentenceGetter(test_df)
-test_sentences = test_getter.sentences
+print("Started getting the sentences")
+sentence_getter = SentenceGetter(df)
+sentences = sentence_getter.sentences
 print("Finished getting the sentences")
-
-
-word_feature_getter = WordFeatureGetter()
 
 
 def word2features(sent, i):
@@ -133,21 +127,18 @@ def sent2tokens(sent):
 
 
 print("Starting Feature Extraction")
-X_list = list()
-y_list = list()
-
-for elem in train_sentence_list:
-    X_list.append((sent2features(s) for s in elem))
-    y_list.append([sent2labels(s) for s in elem])
-
-X_test = [sent2features(s) for s in test_sentences]
-y_test = [sent2labels(s) for s in test_sentences]
+X = (sent2features(s) for s in sentences)
+y = [sent2labels(s) for s in sentences]
 print("Finished Feature Extraction")
 
+
 print("Started Training Train Data Model")
-crf_n_folder_ensemble.fit(X_list, y_list)
+crf_n_folder_ensemble.fit(X_train, y_train)
+
 print("Test on Test Set")
 y_pred = crf_n_folder_ensemble.predict(X_test)
+
 print("Train on Test Results:")
-crf_n_folder_ensemble.save_model()
 print(metrics.flat_classification_report(y_test, y_pred, labels=classes))
+
+crf_n_folder_ensemble.save_model()
